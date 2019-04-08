@@ -1,0 +1,3 @@
+cluster/*/.kubeconfig
+cluster/*/.kubectl
+examples/*
