@@ -4,7 +4,7 @@ Bridge marker is a daemon which marks network bridges available on nodes as node
 
 When a bridge named `testBridge` is created by:
 
-```ip link add test type testBridge```
+```ip link add testBridge type bridge```
 
 the marker will mark the node with the following resources:
 
