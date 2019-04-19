@@ -39,4 +39,7 @@ cluster-down:
 cluster-sync: build
 	./cluster/sync.sh
 
-.PHONY: build format docker-build docker-push manifests cluster-up cluster-down cluster-sync
+dep:
+	dep ensure
+
+.PHONY: build format docker-build docker-push manifests cluster-up cluster-down cluster-sync dep
