@@ -21,8 +21,8 @@ functest:
 	hack/dockerized "hack/build-func-tests.sh"
 	hack/functests.sh
 
-docker-build: build
-	docker build -t ${REGISTRY}/bridge-marker:${IMAGE_TAG} ./cmd/marker
+docker-build: 
+	docker build -f cmd/marker/Dockerfile -t ${REGISTRY}/bridge-marker:${IMAGE_TAG} .
 
 docker-push:
 	docker push ${REGISTRY}/bridge-marker:${IMAGE_TAG}
