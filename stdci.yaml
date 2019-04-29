@@ -1,5 +1,5 @@
 sub-stages:
-  - k8s-multus-1.12.2-release
+  - k8s-multus-1.13.3-release
   - openshift-3.11-multus-release
 
 runtime_requirements:
