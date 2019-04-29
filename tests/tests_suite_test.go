@@ -24,8 +24,11 @@ import (
 
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	ginkgo_reporters "kubevirt.io/qe-tools/pkg/ginkgo-reporters"
+
+	"github.com/kubevirt/bridge-marker/tests"
 )
 
 var kubeconfig *string
@@ -45,9 +48,27 @@ var _ = BeforeSuite(func() {
 	Expect(err).ToNot(HaveOccurred())
 	clientset, err = kubernetes.NewForConfig(config)
 	Expect(err).ToNot(HaveOccurred())
+	createTestNamespace()
+})
+
+var _ = AfterSuite(func() {
+	if clientset == nil {
+		return
+	}
+	deleteTestNamespace()
 })
 
 func init() {
 	kubeconfig = flag.String("kubeconfig", "", "absolute path to the kubeconfig file")
 	flag.Parse()
+}
+
+func createTestNamespace() {
+	_,err := clientset.CoreV1().Namespaces().Create(tests.TestNamespace)
+	Expect(err).ToNot(HaveOccurred())
+}
+
+func deleteTestNamespace() {
+	err := clientset.CoreV1().Namespaces().Delete(tests.TestNamespaceName,&metav1.DeleteOptions{})
+	Expect(err).ToNot(HaveOccurred())
 }
