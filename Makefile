@@ -9,13 +9,13 @@ COMPONENTS = $(sort \
 
 all: build
 
-build: manifests
+build: manifests format
 	hack/version.sh > ./cmd/marker/.version
-	cd cmd/marker && go fmt && go vet && go build
+	cd cmd/marker && go build
 
 format:
-	go fmt ./pkg/...
-	go vet ./pkg/...
+	go fmt ./pkg/... ./cmd/... ./tests/...
+	go vet ./pkg/... ./cmd/... ./tests/...
 
 functest:
 	hack/dockerized "hack/build-func-tests.sh"
