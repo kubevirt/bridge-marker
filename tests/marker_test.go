@@ -15,42 +15,22 @@
 package tests_test
 
 import (
-	"crypto/rand"
-	"fmt"
 	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
 	"github.com/kubevirt/bridge-marker/tests"
-	core_api "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
 )
-
-func getAllSchedulableNodes(clientset *kubernetes.Clientset) *core_api.NodeList {
-	nodes, err := clientset.CoreV1().Nodes().List(v1.ListOptions{})
-	Expect(err).ToNot(HaveOccurred(), "Should list compute nodes")
-	return nodes
-}
 
 var _ = Describe("bridge-marker", func() {
 	Describe("bridge resource reporting", func() {
 		It("should be reported only when available on node", func() {
+			resourceName := tests.GenerateResourceName()
 
-			brId := make([]byte, 6)
-			rand.Read(brId)
-			uniqueBridgeName := fmt.Sprintf("br_%x", brId)
-			resourceName := core_api.ResourceName(fmt.Sprintf("%s/%s", "bridge.network.kubevirt.io", uniqueBridgeName))
-
-			nodes := getAllSchedulableNodes(clientset)
-			Expect(nodes.Items).ToNot(BeEmpty(), "No schedulable nodes found")
-			node := nodes.Items[0].Name
-
-			out, err := tests.RunOnNode(node, fmt.Sprintf("sudo ip link add %s type bridge", uniqueBridgeName))
-			if err != nil {
-				panic(fmt.Errorf("%v: %s", err, out))
-			}
+			node, err := tests.AddBridgeOnSchedulableNode(clientset, tests.TestBridgeName)
+			Expect(err).ToNot(HaveOccurred())
 
 			Eventually(func() bool {
 				node, err := clientset.CoreV1().Nodes().Get(node, v1.GetOptions{})
@@ -68,15 +48,13 @@ var _ = Describe("bridge-marker", func() {
 				return true
 			}, 20*time.Second, 5*time.Second).Should(Equal(true))
 
-			out, err = tests.RunOnNode(node, fmt.Sprintf("sudo ip link del %s", uniqueBridgeName))
-			if err != nil {
-				panic(fmt.Errorf("%v: %s", err, out))
-			}
+			err = tests.RemoveBridgeFromNode(node, tests.TestBridgeName)
+			Expect(err).ToNot(HaveOccurred())
 
 			Eventually(func() bool {
 				node, err := clientset.CoreV1().Nodes().Get(node, v1.GetOptions{})
 				Expect(err).ToNot(HaveOccurred())
-				_, reported := node.Status.Capacity["bridge.network.kubevirt.io/br-test"]
+				_, reported := node.Status.Capacity[resourceName]
 				return reported
 
 			}, 20*time.Second, 5*time.Second).Should(Equal(false))

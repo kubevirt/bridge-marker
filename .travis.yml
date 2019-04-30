@@ -5,7 +5,10 @@ services:
 - docker
 
 install: true
-script: make docker-build
+script:
+  - make
+  - if [[ -n "$(git status --porcelain)" ]] ; then echo "It seems like you need to run make. Please run it and commit the changes"; git status --porcelain; false; fi
+  - make docker-build
 
 deploy:
 - provider: script

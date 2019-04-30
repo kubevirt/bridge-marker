@@ -30,7 +30,7 @@ readonly ARTIFACTS_PATH="$WORKSPACE/exported-artifacts"
 if [[ $TARGET =~ openshift-.* ]]; then
   export KUBEVIRT_PROVIDER="os-3.11.0-multus"
 else
-  export KUBEVIRT_PROVIDER="k8s-multus-1.12.2"
+  export KUBEVIRT_PROVIDER="k8s-multus-1.13.3"
 fi
 
 kubectl() { cluster/kubectl.sh "$@"; }
