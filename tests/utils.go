@@ -20,7 +20,6 @@
 package tests
 
 import (
-	"crypto/rand"
 	"fmt"
 	"os"
 	"os/exec"
@@ -29,6 +28,10 @@ import (
 	coreapi "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+)
+
+const (
+	TestBridgeName = "br_test"
 )
 
 func RunOnNode(node string, command string) (string, error) {
@@ -47,13 +50,10 @@ func RunOnNode(node string, command string) (string, error) {
 	return outStrippedString, err
 }
 
-func GenerateBridgeNameAndResource() (string, coreapi.ResourceName) {
-	brId := make([]byte, 6)
-	rand.Read(brId)
-	uniqueBridgeName := fmt.Sprintf("br_%x", brId)
-	resourceName := coreapi.ResourceName(fmt.Sprintf("%s/%s", "bridge.network.kubevirt.io", uniqueBridgeName))
+func GenerateResourceName() coreapi.ResourceName {
+	resourceName := coreapi.ResourceName(fmt.Sprintf("%s/%s", "bridge.network.kubevirt.io", TestBridgeName))
 
-	return uniqueBridgeName, resourceName
+	return resourceName
 }
 
 func getAllSchedulableNodes(clientset *kubernetes.Clientset) (*coreapi.NodeList, error) {

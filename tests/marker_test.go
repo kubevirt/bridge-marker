@@ -27,9 +27,9 @@ import (
 var _ = Describe("bridge-marker", func() {
 	Describe("bridge resource reporting", func() {
 		It("should be reported only when available on node", func() {
-			uniqueBridgeName, resourceName := tests.GenerateBridgeNameAndResource()
+			resourceName := tests.GenerateResourceName()
 
-			node, err := tests.AddBridgeOnSchedulableNode(clientset, uniqueBridgeName)
+			node, err := tests.AddBridgeOnSchedulableNode(clientset, tests.TestBridgeName)
 			Expect(err).ToNot(HaveOccurred())
 
 			Eventually(func() bool {
@@ -48,7 +48,7 @@ var _ = Describe("bridge-marker", func() {
 				return true
 			}, 20*time.Second, 5*time.Second).Should(Equal(true))
 
-			err = tests.RemoveBridgeFromNode(node, uniqueBridgeName)
+			err = tests.RemoveBridgeFromNode(node, tests.TestBridgeName)
 			Expect(err).ToNot(HaveOccurred())
 
 			Eventually(func() bool {
