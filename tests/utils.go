@@ -24,15 +24,23 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"time"
+
+	. "github.com/onsi/gomega"
 
 	coreapi "k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
 
 const (
-	TestBridgeName = "br_test"
+	TestBridgeName    = "br_test"
+	TestPodBridgeName = "br_podtest"
+	TestPodName       = "bridge-marker-test"
 )
+
+type evaluate func(*v1.Pod) bool
 
 func RunOnNode(node string, command string) (string, error) {
 	provider, ok := os.LookupEnv("KUBEVIRT_PROVIDER")
@@ -50,9 +58,8 @@ func RunOnNode(node string, command string) (string, error) {
 	return outStrippedString, err
 }
 
-func GenerateResourceName() coreapi.ResourceName {
-	resourceName := coreapi.ResourceName(fmt.Sprintf("%s/%s", "bridge.network.kubevirt.io", TestBridgeName))
-
+func GenerateResourceName(bridgeName string) coreapi.ResourceName {
+	resourceName := coreapi.ResourceName(fmt.Sprintf("%s/%s", "bridge.network.kubevirt.io", bridgeName))
 	return resourceName
 }
 
@@ -100,4 +107,38 @@ func RemoveBridgeFromNode(node, bridgename string) error {
 	}
 
 	return nil
+}
+
+func PodSpec(name string, resourceRequirements v1.ResourceList) *v1.Pod {
+	req := &v1.Pod{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Pod",
+			APIVersion: "v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: name,
+		},
+		Spec: v1.PodSpec{
+			Containers: []v1.Container{
+				{
+					Name:  name,
+					Image: "centos",
+					Resources: v1.ResourceRequirements{
+						Limits:   resourceRequirements,
+						Requests: resourceRequirements,
+					},
+					Command: []string{"/bin/bash", "-c", "sleep INF"},
+				},
+			},
+		},
+	}
+	return req
+}
+
+func CheckPodStatus(clientset *kubernetes.Clientset, timeout time.Duration, evaluate evaluate) {
+	Eventually(func() bool {
+		pod, err := clientset.CoreV1().Pods("default").Get(TestPodName, metav1.GetOptions{})
+		Expect(err).ToNot(HaveOccurred())
+		return evaluate(pod)
+	}, timeout*time.Second, 5*time.Second).Should(Equal(true))
 }
