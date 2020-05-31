@@ -1,5 +1,7 @@
-FROM golang:1.10 AS builder
+FROM golang:1.13 AS builder
 ENV GOPATH=/go
+ENV GOFLAGS=-mod=vendor
+ENV GO111MODULE=on
 WORKDIR /go/src/github.com/kubevirt/bridge-marker/
 COPY . .
 RUN hack/version.sh > ./cmd/marker/.version
