@@ -7,6 +7,9 @@ COMPONENTS = $(sort \
 			 $(dir \
 			 $(shell find cmd/ -type f -name '*.go')))))
 
+export GOFLAGS=-mod=vendor
+export GO111MODULE=on
+
 all: build
 
 build: manifests format
@@ -40,6 +43,7 @@ cluster-sync: build
 	./cluster/sync.sh
 
 dep:
-	dep ensure
+	go mod tidy
+	go mod vendor
 
 .PHONY: build format docker-build docker-push manifests cluster-up cluster-down cluster-sync dep
