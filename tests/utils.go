@@ -20,6 +20,7 @@
 package tests
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
@@ -64,7 +65,7 @@ func GenerateResourceName(bridgeName string) coreapi.ResourceName {
 }
 
 func getAllSchedulableNodes(clientset *kubernetes.Clientset) (*coreapi.NodeList, error) {
-	nodes, err := clientset.CoreV1().Nodes().List(metav1.ListOptions{})
+	nodes, err := clientset.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to list compute nodes: %v", err)
 	}
@@ -137,7 +138,7 @@ func PodSpec(name string, resourceRequirements v1.ResourceList) *v1.Pod {
 
 func CheckPodStatus(clientset *kubernetes.Clientset, timeout time.Duration, evaluate evaluate) {
 	Eventually(func() bool {
-		pod, err := clientset.CoreV1().Pods("default").Get(TestPodName, metav1.GetOptions{})
+		pod, err := clientset.CoreV1().Pods("default").Get(context.TODO(), TestPodName, metav1.GetOptions{})
 		Expect(err).ToNot(HaveOccurred())
 		return evaluate(pod)
 	}, timeout*time.Second, 5*time.Second).Should(Equal(true))
