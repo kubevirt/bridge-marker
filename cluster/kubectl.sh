@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright 2019 Red Hat, Inc.
+# Copyright 2018-2019 Red Hat, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,13 +13,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
 
-set -e
+source ./cluster/kubevirtci.sh
+kubevirtci::install
 
-source $(dirname "$0")/../hack/common.sh
-
-source ${KUBEVIRT_DIR}/cluster/$KUBEVIRT_PROVIDER/provider.sh
-source ${KUBEVIRT_DIR}/hack/config.sh
-
-_kubectl "$@"
+$(kubevirtci::path)/cluster-up/kubectl.sh "$@"

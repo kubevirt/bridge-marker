@@ -1,4 +1,4 @@
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: bridge-marker
@@ -7,11 +7,15 @@ metadata:
     tier: node
     app: bridge-marker
 spec:
+  selector:
+    matchLabels:
+      name: bridge-marker
   template:
     metadata:
       labels:
         tier: node
         app: bridge-marker
+        name: bridge-marker
     spec:
       serviceAccountName: bridge-marker
       hostNetwork: true

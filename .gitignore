@@ -6,3 +6,5 @@ build/_output/*
 
 hack/config-provider-*
 _out/
+
+_kubevirtci
