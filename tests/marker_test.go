@@ -15,6 +15,7 @@
 package tests_test
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -40,7 +41,7 @@ var _ = Describe("bridge-marker", func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			Eventually(func() bool {
-				node, err := clientset.CoreV1().Nodes().Get(node, v1.GetOptions{})
+				node, err := clientset.CoreV1().Nodes().Get(context.TODO(), node, v1.GetOptions{})
 				Expect(err).ToNot(HaveOccurred())
 
 				capacity, reported := node.Status.Capacity[resourceName]
@@ -59,7 +60,7 @@ var _ = Describe("bridge-marker", func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			Eventually(func() bool {
-				node, err := clientset.CoreV1().Nodes().Get(node, v1.GetOptions{})
+				node, err := clientset.CoreV1().Nodes().Get(context.TODO(), node, v1.GetOptions{})
 				Expect(err).ToNot(HaveOccurred())
 				_, reported := node.Status.Capacity[resourceName]
 				return reported
@@ -77,7 +78,7 @@ var _ = Describe("bridge-marker", func() {
 			}
 
 			podReq := tests.PodSpec(tests.TestPodName, requiredResources)
-			_, err := clientset.CoreV1().Pods(DefaultNamespace).Create(podReq)
+			_, err := clientset.CoreV1().Pods(DefaultNamespace).Create(context.TODO(), podReq, v1.CreateOptions{})
 			Expect(err).ToNot(HaveOccurred())
 
 			tests.CheckPodStatus(
@@ -114,7 +115,7 @@ var _ = Describe("bridge-marker", func() {
 
 			err = tests.RemoveBridgeFromNode(node, tests.TestPodBridgeName)
 			Expect(err).ToNot(HaveOccurred())
-			clientset.CoreV1().Pods(DefaultNamespace).Delete(tests.TestPodName, &v1.DeleteOptions{})
+			clientset.CoreV1().Pods(DefaultNamespace).Delete(context.TODO(), tests.TestPodName, v1.DeleteOptions{})
 		})
 	})
 })

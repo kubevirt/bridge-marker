@@ -10,6 +10,8 @@ export GOBIN=$(GOROOT)/bin/
 export PATH := $(GOROOT)/bin:$(PATH)
 export GO := $(GOBIN)/go
 
+GINKGO ?= $(GOBIN)/ginkgo
+
 COMPONENTS = $(sort \
 			 $(subst /,-,\
 			 $(patsubst cmd/%/,%,\
@@ -21,15 +23,18 @@ all: build
 $(GO):
 	hack/install-go.sh $(BIN_DIR)
 
+$(GINKGO): go.mod
+	$(MAKE) tools
+
 build: marker manifests format
 
 format: $(GO)
 	$(GO) fmt ./pkg/... ./cmd/... ./tests/...
 	$(GO) vet ./pkg/... ./cmd/... ./tests/...
 
-functest:
-	hack/dockerized "hack/build-func-tests.sh"
-	hack/functests.sh
+functest: $(GINKGO)
+	GINKGO=$(GINKGO) hack/build-func-tests.sh
+	GINKGO=$(GINKGO) hack/functests.sh
 
 marker: $(GO)
 	hack/version.sh > $(BIN_DIR)/.version
@@ -57,4 +62,7 @@ vendor: $(GO)
 	$(GO) mod tidy
 	$(GO) mod vendor
 
-.PHONY: build format docker-build docker-push manifests cluster-up cluster-down cluster-sync vendor marker marker
+tools: $(GO)
+	./hack/install-tools.sh
+
+.PHONY: build format docker-build docker-push manifests cluster-up cluster-down cluster-sync vendor marker marker tools
