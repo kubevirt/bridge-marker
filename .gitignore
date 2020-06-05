@@ -2,8 +2,7 @@ cluster/*/.kubeconfig
 cluster/*/.kubectl
 examples/*
 
-cmd/marker/marker
-cmd/marker/.version
+build/_output/*
 
 hack/config-provider-*
 _out/
