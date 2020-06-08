@@ -65,4 +65,4 @@ vendor: $(GO)
 tools: $(GO)
 	./hack/install-tools.sh
 
-.PHONY: build format docker-build docker-push manifests cluster-up cluster-down cluster-sync vendor marker marker tools
+.PHONY: build format docker-build docker-push manifests cluster-up cluster-down cluster-sync vendor marker tools
