@@ -50,3 +50,20 @@ until [[ $(./cluster/kubectl.sh get --ignore-not-found -f $bridge_marker_manifes
 until [[ $(./cluster/kubectl.sh get --ignore-not-found ds bridge-marker 2>&1 | wc -l) -eq 0 ]]; do sleep 1; done
 
 ./cluster/kubectl.sh create -f $bridge_marker_manifest
+
+# Wait for daemon set to be scheduled on all nodes
+timeout=300
+sample=30
+current_time=0
+while true; do
+  describe_result=$(./cluster/kubectl.sh describe  daemonset bridge-marker -n kube-system)
+  desired_nodes=$(echo "$describe_result" | grep "Desired Number of Nodes Scheduled"| awk -F ':'  '{print $2}')
+  current_nodes=$(echo "$describe_result" | grep "Number of Nodes Scheduled with Up-to-date Pods"| awk -F ':'  '{print $2}')
+  if [ $desired_nodes -eq $current_nodes ]; then
+      break
+  fi
+  current_time=$((current_time + sample))
+  if [ $current_time -gt $timeout ]; then
+    exit 1
+  fi
+done

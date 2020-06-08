@@ -1,32 +1,35 @@
-#!/bin/bash -xe
+#!/bin/bash
+
+set -xe
+
+teardown() {
+    make cluster-down
+    cp $(find . -name "*junit*.xml") $ARTIFACTS || true
+}
 
 main() {
-    TARGET="$0"
-    TARGET="${TARGET#./}"
-    TARGET="${TARGET%.*}"
-    TARGET="${TARGET#*.}"
-    echo "TARGET=$TARGET"
-    export TARGET
 
-    cd ..
-    export GOROOT=/usr/local/go
-    export GOPATH=$(pwd)/go
-    export PATH=$GOPATH/bin:$GOROOT/bin:$PATH
-    mkdir -p $GOPATH
+    export KUBEVIRT_PROVIDER=k8s-1.18
+    source automation/check-patch.setup.sh
+    cd ${TMP_PROJECT_PATH}
 
-    echo "Install Go 1.10"
-    export GIMME_GO_VERSION=1.10
-    mkdir -p /gimme
-    curl -sL https://raw.githubusercontent.com/travis-ci/gimme/master/gimme | HOME=/gimme bash >> /etc/profile.d/gimme.sh
-    source /etc/profile.d/gimme.sh
 
-    mkdir -p $GOPATH/src/github.com/kubevirt
-    mkdir -p $GOPATH/pkg
-    ln -s $(pwd)/bridge-marker $GOPATH/src/github.com/kubevirt/
-    cd $GOPATH/src/github.com/kubevirt/bridge-marker
+    # Let's fail fast if it's not compiling
+    make docker-build
 
-    echo "Run functional tests"
-    exec automation/test.sh
+    make cluster-down
+    make cluster-up
+    trap teardown EXIT SIGINT SIGTERM SIGSTOP
+
+    # Run cluster-sync to deploy bridge-marker on the nodes
+    make cluster-sync
+
+    ./cluster/kubectl.sh version
+
+    if ! FUNC_TEST_ARGS="--ginkgo.noColor" make functest; then
+        ./cluster/kubectl.sh logs -n kube-system -l app=bridge-marker
+        return 1
+    fi
 }
 
 [[ "${BASH_SOURCE[0]}" == "$0" ]] && main "$@"

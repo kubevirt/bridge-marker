@@ -76,7 +76,7 @@ func getAllSchedulableNodes(clientset *kubernetes.Clientset) (*coreapi.NodeList,
 func AddBridgeOnSchedulableNode(clientset *kubernetes.Clientset, bridgename string) (string, error) {
 	nodes, err := getAllSchedulableNodes(clientset)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed getting all schedulable nodes: %w", err)
 	}
 
 	if len(nodes.Items) == 0 {
@@ -90,12 +90,12 @@ func AddBridgeOnSchedulableNode(clientset *kubernetes.Clientset, bridgename stri
 func AddBridgeOnNode(node, bridgename string) error {
 	out, err := RunOnNode(node, fmt.Sprintf("sudo ip link add %s type bridge", bridgename))
 	if err != nil {
-		return fmt.Errorf("%v: %s", err, out)
+		return fmt.Errorf("failed adding bridge at node node cmd: %s, err: %w", out, err)
 	}
 
 	out, err = RunOnNode(node, fmt.Sprintf("sudo ip link set %s up", bridgename))
 	if err != nil {
-		return fmt.Errorf("%v: %s", err, out)
+		return fmt.Errorf("failed to set bridge up at node cmd: %s, err: %w", out, err)
 	}
 
 	return nil
