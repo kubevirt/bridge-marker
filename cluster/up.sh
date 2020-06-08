@@ -17,20 +17,8 @@
 set -ex
 
 source ./cluster/kubevirtci.sh
-CNAO_VERSIOV=0.35.0
 kubevirtci::install
 
-if [[ "$KUBEVIRT_PROVIDER" != external ]]; then
-    $(kubevirtci::path)/cluster-up/up.sh
-fi
-
-# Deploy Multus
-./cluster/kubectl.sh create -f https://github.com/kubevirt/cluster-network-addons-operator/releases/download/${CNAO_VERSIOV}/namespace.yaml
-./cluster/kubectl.sh create -f https://github.com/kubevirt/cluster-network-addons-operator/releases/download/${CNAO_VERSIOV}/network-addons-config.crd.yaml
-./cluster/kubectl.sh create -f https://github.com/kubevirt/cluster-network-addons-operator/releases/download/${CNAO_VERSIOV}/operator.yaml
-./cluster/kubectl.sh create -f ./hack/cna/cna-cr.yaml
-
-# wait for cluster operator
-./cluster/kubectl.sh wait networkaddonsconfig cluster --for condition=Available --timeout=800s
+$(kubevirtci::path)/cluster-up/up.sh
 
 echo "Done"
