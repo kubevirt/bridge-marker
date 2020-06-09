@@ -20,13 +20,14 @@
 package tests
 
 import (
+	"bytes"
 	"context"
 	"fmt"
-	"os"
 	"os/exec"
 	"strings"
 	"time"
 
+	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
 	coreapi "k8s.io/api/core/v1"
@@ -43,20 +44,32 @@ const (
 
 type evaluate func(*v1.Pod) bool
 
-func RunOnNode(node string, command string) (string, error) {
-	provider, ok := os.LookupEnv("KUBEVIRT_PROVIDER")
-	if !ok {
-		panic("KUBEVIRT_PROVIDER environment variable must be specified")
+func RunOnNode(node string, command ...string) (string, error) {
+	ssh := "./cluster/ssh.sh"
+	ssh_command := []string{node, "--"}
+	ssh_command = append(ssh_command, command...)
+	output, err := Run(ssh, false, ssh_command...)
+	// Remove first two lines from output, ssh.sh add garbage there
+	outputLines := strings.Split(output, "\n")
+	if len(outputLines) > 2 {
+		output = strings.Join(outputLines[2:], "\n")
 	}
+	return output, err
+}
 
-	out, err := exec.Command("docker", "exec", provider+"-"+node, "ssh.sh", command).CombinedOutput()
-	outString := string(out)
-	outLines := strings.Split(outString, "\n")
-	// first two lines of output indicate that connection was successful
-	outStripped := outLines[2:]
-	outStrippedString := strings.Join(outStripped, "\n")
-
-	return outStrippedString, err
+func Run(command string, quiet bool, arguments ...string) (string, error) {
+	cmd := exec.Command(command, arguments...)
+	if !quiet {
+		GinkgoWriter.Write([]byte(command + " " + strings.Join(arguments, " ") + "\n"))
+	}
+	var stdout, stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	cmd.Stdout = &stdout
+	err := cmd.Run()
+	if !quiet {
+		GinkgoWriter.Write([]byte(fmt.Sprintf("stdout: %.500s...\n, stderr %s\n", stdout.String(), stderr.String())))
+	}
+	return stdout.String(), err
 }
 
 func GenerateResourceName(bridgeName string) coreapi.ResourceName {
