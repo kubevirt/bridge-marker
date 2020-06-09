@@ -1,6 +1,17 @@
 REGISTRY ?= quay.io/kubevirt
 IMAGE_TAG ?= latest
 
+BIN_DIR = $(CURDIR)/build/_output/bin/
+export GOPROXY=direct
+export GOSUMDB=off
+export GOFLAGS=-mod=vendor
+export GOROOT=$(BIN_DIR)/go/
+export GOBIN=$(GOROOT)/bin/
+export PATH := $(GOROOT)/bin:$(PATH)
+export GO := $(GOBIN)/go
+
+GINKGO ?= $(GOBIN)/ginkgo
+
 COMPONENTS = $(sort \
 			 $(subst /,-,\
 			 $(patsubst cmd/%/,%,\
@@ -9,20 +20,28 @@ COMPONENTS = $(sort \
 
 all: build
 
-build: manifests format
-	hack/version.sh > ./cmd/marker/.version
-	cd cmd/marker && go build
+$(GO):
+	hack/install-go.sh $(BIN_DIR)
 
-format:
-	go fmt ./pkg/... ./cmd/... ./tests/...
-	go vet ./pkg/... ./cmd/... ./tests/...
+$(GINKGO): go.mod
+	$(MAKE) tools
 
-functest:
-	hack/dockerized "hack/build-func-tests.sh"
-	hack/functests.sh
+build: marker manifests format
 
-docker-build: 
-	docker build -f cmd/marker/Dockerfile -t ${REGISTRY}/bridge-marker:${IMAGE_TAG} .
+format: $(GO)
+	$(GO) fmt ./pkg/... ./cmd/... ./tests/...
+	$(GO) vet ./pkg/... ./cmd/... ./tests/...
+
+functest: $(GINKGO)
+	GINKGO=$(GINKGO) hack/build-func-tests.sh
+	GINKGO=$(GINKGO) hack/functests.sh
+
+marker: $(GO)
+	hack/version.sh > $(BIN_DIR)/.version
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GO) build -o $(BIN_DIR)/marker github.com/kubevirt/bridge-marker/cmd/marker
+
+docker-build: marker
+	docker build -t ${REGISTRY}/bridge-marker:${IMAGE_TAG} ./build
 
 docker-push:
 	docker push ${REGISTRY}/bridge-marker:${IMAGE_TAG}
@@ -39,7 +58,11 @@ cluster-down:
 cluster-sync: build
 	./cluster/sync.sh
 
-dep:
-	dep ensure
+vendor: $(GO)
+	$(GO) mod tidy
+	$(GO) mod vendor
 
-.PHONY: build format docker-build docker-push manifests cluster-up cluster-down cluster-sync dep
+tools: $(GO)
+	./hack/install-tools.sh
+
+.PHONY: build format docker-build docker-push manifests cluster-up cluster-down cluster-sync vendor marker tools

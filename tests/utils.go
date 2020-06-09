@@ -20,12 +20,14 @@
 package tests
 
 import (
+	"bytes"
+	"context"
 	"fmt"
-	"os"
 	"os/exec"
 	"strings"
 	"time"
 
+	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
 	coreapi "k8s.io/api/core/v1"
@@ -42,20 +44,32 @@ const (
 
 type evaluate func(*v1.Pod) bool
 
-func RunOnNode(node string, command string) (string, error) {
-	provider, ok := os.LookupEnv("KUBEVIRT_PROVIDER")
-	if !ok {
-		panic("KUBEVIRT_PROVIDER environment variable must be specified")
+func RunOnNode(node string, command ...string) (string, error) {
+	ssh := "./cluster/ssh.sh"
+	ssh_command := []string{node, "--"}
+	ssh_command = append(ssh_command, command...)
+	output, err := Run(ssh, false, ssh_command...)
+	// Remove first two lines from output, ssh.sh add garbage there
+	outputLines := strings.Split(output, "\n")
+	if len(outputLines) > 2 {
+		output = strings.Join(outputLines[2:], "\n")
 	}
+	return output, err
+}
 
-	out, err := exec.Command("docker", "exec", provider+"-"+node, "ssh.sh", command).CombinedOutput()
-	outString := string(out)
-	outLines := strings.Split(outString, "\n")
-	// first two lines of output indicate that connection was successful
-	outStripped := outLines[2:]
-	outStrippedString := strings.Join(outStripped, "\n")
-
-	return outStrippedString, err
+func Run(command string, quiet bool, arguments ...string) (string, error) {
+	cmd := exec.Command(command, arguments...)
+	if !quiet {
+		GinkgoWriter.Write([]byte(command + " " + strings.Join(arguments, " ") + "\n"))
+	}
+	var stdout, stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	cmd.Stdout = &stdout
+	err := cmd.Run()
+	if !quiet {
+		GinkgoWriter.Write([]byte(fmt.Sprintf("stdout: %.500s...\n, stderr %s\n", stdout.String(), stderr.String())))
+	}
+	return stdout.String(), err
 }
 
 func GenerateResourceName(bridgeName string) coreapi.ResourceName {
@@ -64,7 +78,7 @@ func GenerateResourceName(bridgeName string) coreapi.ResourceName {
 }
 
 func getAllSchedulableNodes(clientset *kubernetes.Clientset) (*coreapi.NodeList, error) {
-	nodes, err := clientset.CoreV1().Nodes().List(metav1.ListOptions{})
+	nodes, err := clientset.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to list compute nodes: %v", err)
 	}
@@ -75,7 +89,7 @@ func getAllSchedulableNodes(clientset *kubernetes.Clientset) (*coreapi.NodeList,
 func AddBridgeOnSchedulableNode(clientset *kubernetes.Clientset, bridgename string) (string, error) {
 	nodes, err := getAllSchedulableNodes(clientset)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed getting all schedulable nodes: %w", err)
 	}
 
 	if len(nodes.Items) == 0 {
@@ -89,12 +103,12 @@ func AddBridgeOnSchedulableNode(clientset *kubernetes.Clientset, bridgename stri
 func AddBridgeOnNode(node, bridgename string) error {
 	out, err := RunOnNode(node, fmt.Sprintf("sudo ip link add %s type bridge", bridgename))
 	if err != nil {
-		return fmt.Errorf("%v: %s", err, out)
+		return fmt.Errorf("failed adding bridge at node node cmd: %s, err: %w", out, err)
 	}
 
 	out, err = RunOnNode(node, fmt.Sprintf("sudo ip link set %s up", bridgename))
 	if err != nil {
-		return fmt.Errorf("%v: %s", err, out)
+		return fmt.Errorf("failed to set bridge up at node cmd: %s, err: %w", out, err)
 	}
 
 	return nil
@@ -137,7 +151,7 @@ func PodSpec(name string, resourceRequirements v1.ResourceList) *v1.Pod {
 
 func CheckPodStatus(clientset *kubernetes.Clientset, timeout time.Duration, evaluate evaluate) {
 	Eventually(func() bool {
-		pod, err := clientset.CoreV1().Pods("default").Get(TestPodName, metav1.GetOptions{})
+		pod, err := clientset.CoreV1().Pods("default").Get(context.TODO(), TestPodName, metav1.GetOptions{})
 		Expect(err).ToNot(HaveOccurred())
 		return evaluate(pod)
 	}, timeout*time.Second, 5*time.Second).Should(Equal(true))

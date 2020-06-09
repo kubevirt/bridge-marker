@@ -15,6 +15,7 @@
 package tests_test
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -32,43 +33,50 @@ const (
 )
 
 var _ = Describe("bridge-marker", func() {
-	Describe("bridge resource reporting", func() {
+	var (
+		node string
+	)
+	Context("when bridge is created at node", func() {
+		AfterEach(func() {
+			tests.RemoveBridgeFromNode(node, tests.TestBridgeName)
+		})
+
 		It("should be reported only when available on node", func() {
 			resourceName := tests.GenerateResourceName(tests.TestBridgeName)
 
-			node, err := tests.AddBridgeOnSchedulableNode(clientset, tests.TestBridgeName)
+			var err error
+			node, err = tests.AddBridgeOnSchedulableNode(clientset, tests.TestBridgeName)
 			Expect(err).ToNot(HaveOccurred())
 
-			Eventually(func() bool {
-				node, err := clientset.CoreV1().Nodes().Get(node, v1.GetOptions{})
+			Eventually(func() (int64, error) {
+				node, err := clientset.CoreV1().Nodes().Get(context.TODO(), node, v1.GetOptions{})
 				Expect(err).ToNot(HaveOccurred())
 
 				capacity, reported := node.Status.Capacity[resourceName]
 
 				if !reported {
-					return false
+					return 0, fmt.Errorf("Node has no capacity entry for %s", resourceName)
 				}
 				capacityInt, _ := capacity.AsInt64()
-				if capacityInt != int64(1000) {
-					return false
-				}
-				return true
-			}, 20*time.Second, 5*time.Second).Should(Equal(true))
+				return capacityInt, nil
+			}, 20*time.Second, 5*time.Second).Should(Equal(int64(1000)), fmt.Sprintf("should has node with capacity 1000 for the resource %s after adding the bridge to the node", resourceName))
 
 			err = tests.RemoveBridgeFromNode(node, tests.TestBridgeName)
 			Expect(err).ToNot(HaveOccurred())
 
-			Eventually(func() bool {
-				node, err := clientset.CoreV1().Nodes().Get(node, v1.GetOptions{})
+			Eventually(func() corev1.ResourceList {
+				node, err := clientset.CoreV1().Nodes().Get(context.TODO(), node, v1.GetOptions{})
 				Expect(err).ToNot(HaveOccurred())
-				_, reported := node.Status.Capacity[resourceName]
-				return reported
-
-			}, 20*time.Second, 5*time.Second).Should(Equal(false))
+				return node.Status.Capacity
+			}, 20*time.Second, 5*time.Second).ShouldNot(HaveKey(resourceName), fmt.Sprintf("should no has no capacity at node for resource %s after removing the bridge", resourceName))
 		})
 	})
 
 	Describe("pod requiring bridge resource", func() {
+		AfterEach(func() {
+			tests.RemoveBridgeFromNode(node, tests.TestPodBridgeName)
+			clientset.CoreV1().Pods(DefaultNamespace).Delete(context.TODO(), tests.TestPodName, v1.DeleteOptions{})
+		})
 		It("should be started only when bridge is available on node", func() {
 			resourceName := tests.GenerateResourceName(tests.TestPodBridgeName)
 			requiredResourceCount := "1"
@@ -77,7 +85,7 @@ var _ = Describe("bridge-marker", func() {
 			}
 
 			podReq := tests.PodSpec(tests.TestPodName, requiredResources)
-			_, err := clientset.CoreV1().Pods(DefaultNamespace).Create(podReq)
+			_, err := clientset.CoreV1().Pods(DefaultNamespace).Create(context.TODO(), podReq, v1.CreateOptions{})
 			Expect(err).ToNot(HaveOccurred())
 
 			tests.CheckPodStatus(
@@ -111,10 +119,6 @@ var _ = Describe("bridge-marker", func() {
 					return false
 				},
 			)
-
-			err = tests.RemoveBridgeFromNode(node, tests.TestPodBridgeName)
-			Expect(err).ToNot(HaveOccurred())
-			clientset.CoreV1().Pods(DefaultNamespace).Delete(tests.TestPodName, &v1.DeleteOptions{})
 		})
 	})
 })

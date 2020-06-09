@@ -23,7 +23,7 @@ KUBEVIRT_DIR="$(
 VENDOR_DIR=$KUBEVIRT_DIR/vendor
 
 
-KUBEVIRT_PROVIDER=${KUBEVIRT_PROVIDER:-k8s-multus-1.12.2}
+KUBEVIRT_PROVIDER=${KUBEVIRT_PROVIDER:-k8s-1.18}
 KUBEVIRT_NUM_NODES=${KUBEVIRT_NUM_NODES:-1}
 KUBEVIRT_MEMORY_SIZE=${KUBEVIRT_MEMORY_SIZE:-5120M}
 
@@ -32,7 +32,7 @@ TESTS_OUT_DIR=$OUT_DIR/tests
 
 function build_func_tests() {
     mkdir -p ${TESTS_OUT_DIR}/
-    ginkgo build ${KUBEVIRT_DIR}/tests
+    $GINKGO build ${KUBEVIRT_DIR}/tests
     mv ${KUBEVIRT_DIR}/tests/tests.test ${TESTS_OUT_DIR}/
 }
 
