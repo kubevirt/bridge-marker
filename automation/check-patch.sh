@@ -26,7 +26,7 @@ main() {
 
     ./cluster/kubectl.sh version
 
-    if ! FUNC_TEST_ARGS="--ginkgo.noColor" make functest; then
+    if ! FUNC_TEST_ARGS="--ginkgo.noColor --junit-output=$ARTIFACTS/junit.functest.xml" make functest; then
         ./cluster/kubectl.sh logs -n kube-system -l app=bridge-marker
         return 1
     fi
