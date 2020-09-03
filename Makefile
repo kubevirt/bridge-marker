@@ -4,7 +4,6 @@ IMAGE_TAG ?= latest
 BIN_DIR = $(CURDIR)/build/_output/bin/
 export GOPROXY=direct
 export GOSUMDB=off
-export GOFLAGS=-mod=vendor
 export GOROOT=$(BIN_DIR)/go/
 export GOBIN=$(GOROOT)/bin/
 export PATH := $(GOROOT)/bin:$(PATH)
@@ -59,6 +58,7 @@ cluster-sync: build
 	./cluster/sync.sh
 
 vendor: $(GO)
+	$(GO) get -t -u ./...
 	$(GO) mod tidy
 	$(GO) mod vendor
 
