@@ -12,7 +12,7 @@ require (
 	k8s.io/api v0.19.1
 	k8s.io/apimachinery v0.19.1
 	k8s.io/client-go v0.19.1
-	kubevirt.io/qe-tools v0.1.2
+	kubevirt.io/qe-tools v0.1.6
 )
 
 replace golang.org/x/text => golang.org/x/text v0.3.3
