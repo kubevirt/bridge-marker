@@ -25,5 +25,6 @@ source hack/config.sh
 if [[ ${TARGET} == openshift* ]]; then
     oc=${kubectl}
 fi
+KUBECONFIG=${KUBECONFIG:-$(cluster/kubeconfig.sh)}
 export KUBEVIRT_PROVIDER=$KUBEVIRT_PROVIDER
-${TESTS_OUT_DIR}/tests.test -kubeconfig=$(cluster/kubeconfig.sh) ${FUNC_TEST_ARGS}
+${TESTS_OUT_DIR}/tests.test -kubeconfig=${KUBECONFIG} ${FUNC_TEST_ARGS}
