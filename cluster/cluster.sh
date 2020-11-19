@@ -15,22 +15,23 @@
 export KUBEVIRT_PROVIDER=${KUBEVIRT_PROVIDER:-'k8s-1.18'}
 
 KUBEVIRTCI_VERSION='df2d0854cffe248800f4eec6b86170fd1187440f'
-KUBEVIRTCI_PATH="${PWD}/_kubevirtci"
+# The CLUSTER_PATH var is used in cluster folder and points to the _kubevirtci where the cluster is deployed from.
+CLUSTER_PATH=${CLUSTER_PATH:-"${PWD}/_kubevirtci/"}
 
-function kubevirtci::install() {
-    if [ ! -d ${KUBEVIRTCI_PATH} ]; then
-        git clone https://github.com/kubevirt/kubevirtci.git ${KUBEVIRTCI_PATH}
+function cluster::install() {
+    if [ ! -d ${CLUSTER_PATH} ]; then
+        git clone https://github.com/kubevirt/kubevirtci.git ${CLUSTER_PATH}
         (
-            cd ${KUBEVIRTCI_PATH}
+            cd ${CLUSTER_PATH}
             git checkout ${KUBEVIRTCI_VERSION}
         )
     fi
 }
 
-function kubevirtci::path() {
-    echo -n ${KUBEVIRTCI_PATH}
+function cluster::path() {
+    echo -n ${CLUSTER_PATH}
 }
 
-function kubevirtci::kubeconfig() {
-    echo -n ${KUBEVIRTCI_PATH}/_ci-configs/${KUBEVIRT_PROVIDER}/.kubeconfig
+function cluster::kubeconfig() {
+    echo -n ${CLUSTER_PATH}/_ci-configs/${KUBEVIRT_PROVIDER}/.kubeconfig
 }

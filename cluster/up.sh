@@ -16,9 +16,9 @@
 
 set -ex
 
-source ./cluster/kubevirtci.sh
-kubevirtci::install
+source ./cluster/cluster.sh
+cluster::install
 
-$(kubevirtci::path)/cluster-up/up.sh
+$(cluster::path)/cluster-up/up.sh
 
 echo "Done"

@@ -2,7 +2,7 @@
 
 set -e
 
-source ./cluster/kubevirtci.sh
-kubevirtci::install
+source ./cluster/cluster.sh
+cluster::install
 
-$(kubevirtci::path)/cluster-up/cli.sh ssh "$@"
+$(cluster::path)/cluster-up/cli.sh ssh "$@"
