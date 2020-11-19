@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-export KUBEVIRT_PROVIDER=${KUBEVIRT_PROVIDER:-'k8s-1.18'}
+export KUBEVIRT_PROVIDER=${KUBEVIRT_PROVIDER:-'k8s-1.19'}
+export KUBEVIRTCI_TAG="2011121336-c2cf403"
 
-KUBEVIRTCI_VERSION='df2d0854cffe248800f4eec6b86170fd1187440f'
 # The CLUSTER_PATH var is used in cluster folder and points to the _kubevirtci where the cluster is deployed from.
 CLUSTER_PATH=${CLUSTER_PATH:-"${PWD}/_kubevirtci/"}
 
@@ -23,7 +23,7 @@ function cluster::install() {
         git clone https://github.com/kubevirt/kubevirtci.git ${CLUSTER_PATH}
         (
             cd ${CLUSTER_PATH}
-            git checkout ${KUBEVIRTCI_VERSION}
+            git checkout ${KUBEVIRTCI_TAG}
         )
     fi
 }
