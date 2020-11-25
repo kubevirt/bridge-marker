@@ -16,8 +16,8 @@
 
 set -ex
 
-source ./cluster/kubevirtci.sh
-kubevirtci::install
+source ./cluster/cluster.sh
+cluster::install
 
 if [[ "$KUBEVIRT_PROVIDER" == external ]]; then
     if [[ ! -v DEV_REGISTRY ]]; then
@@ -59,9 +59,10 @@ while true; do
   describe_result=$(./cluster/kubectl.sh describe  daemonset bridge-marker -n kube-system)
   desired_nodes=$(echo "$describe_result" | grep "Desired Number of Nodes Scheduled"| awk -F ':'  '{print $2}')
   current_nodes=$(echo "$describe_result" | grep "Number of Nodes Scheduled with Up-to-date Pods"| awk -F ':'  '{print $2}')
-  if [ $desired_nodes -eq $current_nodes ]; then
+  if [ "$desired_nodes" -ne "0" ] && [ $desired_nodes -eq $current_nodes ]; then
       break
   fi
+  sleep 1
   current_time=$((current_time + sample))
   if [ $current_time -gt $timeout ]; then
     exit 1

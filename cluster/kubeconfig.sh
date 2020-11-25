@@ -1,4 +1,4 @@
 #!/bin/bash
 
-source ./cluster/kubevirtci.sh
-kubevirtci::kubeconfig
+source ./cluster/cluster.sh
+cluster::kubeconfig
