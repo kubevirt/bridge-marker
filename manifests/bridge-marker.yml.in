@@ -27,6 +27,7 @@ spec:
       - key: node-role.kubernetes.io/master
         operator: Exists
         effect: NoSchedule
+      priorityClassName: system-node-critical
       containers:
       - name: bridge-marker
         image: ${BRIDGE_MARKER_IMAGE_REPO}/${BRIDGE_MARKER_IMAGE_NAME}:${BRIDGE_MARKER_IMAGE_VERSION}
