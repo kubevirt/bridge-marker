@@ -1,5 +1,6 @@
 REGISTRY ?= quay.io/kubevirt
 IMAGE_TAG ?= latest
+IMAGE_GIT_TAG ?= $(shell git describe --abbrev=8 --tags)
 
 BIN_DIR = $(CURDIR)/build/_output/bin/
 export GOPROXY=direct
@@ -45,6 +46,8 @@ docker-build: marker
 
 docker-push:
 	docker push ${REGISTRY}/bridge-marker:${IMAGE_TAG}
+	docker tag ${REGISTRY}/bridge-marker:${IMAGE_TAG} ${REGISTRY}/bridge-marker:${IMAGE_GIT_TAG}
+	docker push ${REGISTRY}/bridge-marker:${IMAGE_GIT_TAG}
 
 manifests:
 	./hack/build-manifests.sh
