@@ -41,8 +41,10 @@ func main() {
 	}
 
 	cache := cache.Cache{}
-	wait.PollImmediateInfinite(time.Duration(*updateInterval)*time.Second, func() (bool, error) {
-		if time.Now().Sub(cache.LastRefreshTime()) >= time.Duration(*reconcileInterval)*time.Minute {
+	wait.JitterUntil(func() {
+		jitteredReconcileInterval := wait.Jitter(time.Duration(*reconcileInterval)*time.Minute, 1.2)
+		shouldReconcileNode := time.Now().Sub(cache.LastRefreshTime()) >= jitteredReconcileInterval
+		if shouldReconcileNode {
 			reportedBridges, err := marker.GetReportedResources(*nodeName)
 			if err != nil {
 				glog.Errorf("GetReportedResources failed: %v", err)
@@ -51,7 +53,7 @@ func main() {
 			if !reflect.DeepEqual(cache.Bridges(), reportedBridges) {
 				glog.Warningf("cached bridges are different than the reported bridges on node %s", *nodeName)
 			}
-			
+
 			cache.Refresh(reportedBridges)
 		}
 
@@ -59,7 +61,5 @@ func main() {
 		if err != nil {
 			glog.Errorf("Update failed: %v", err)
 		}
-
-		return false, nil
-	})
+	}, time.Duration(*updateInterval)*time.Second, 1.2, true, wait.NeverStop)
 }
