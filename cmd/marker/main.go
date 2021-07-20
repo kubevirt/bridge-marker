@@ -16,15 +16,23 @@ package main
 
 import (
 	"flag"
+	"fmt"
+	"reflect"
 	"time"
 
 	"github.com/golang/glog"
+	"github.com/kubevirt/bridge-marker/pkg/cache"
 	"github.com/kubevirt/bridge-marker/pkg/marker"
+	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 func main() {
 	nodeName := flag.String("node-name", "", "name of kubernetes node")
-	pollInterval := flag.Int("poll-interval", 10, "interval between updates in seconds, 10 by default")
+	const defaultUpdateInterval = 60 * time.Second
+	updateInterval := flag.Int("update-interval", int(defaultUpdateInterval.Seconds()), fmt.Sprintf("interval between updates in seconds, %d by default", defaultUpdateInterval))
+
+	const defaultReconcileInterval = 10 * time.Minute
+	reconcileInterval := flag.Int("reconcile-interval", int(defaultReconcileInterval.Minutes()), fmt.Sprintf("interval between node bridges reconcile in minutes, %d by default", defaultReconcileInterval))
 
 	flag.Parse()
 
@@ -32,11 +40,26 @@ func main() {
 		glog.Fatal("node-name must be set")
 	}
 
-	for {
-		err := marker.Update(*nodeName)
+	cache := cache.Cache{}
+	wait.JitterUntil(func() {
+		jitteredReconcileInterval := wait.Jitter(time.Duration(*reconcileInterval)*time.Minute, 1.2)
+		shouldReconcileNode := time.Now().Sub(cache.LastRefreshTime()) >= jitteredReconcileInterval
+		if shouldReconcileNode {
+			reportedBridges, err := marker.GetReportedResources(*nodeName)
+			if err != nil {
+				glog.Errorf("GetReportedResources failed: %v", err)
+			}
+
+			if !reflect.DeepEqual(cache.Bridges(), reportedBridges) {
+				glog.Warningf("cached bridges are different than the reported bridges on node %s", *nodeName)
+			}
+
+			cache.Refresh(reportedBridges)
+		}
+
+		err := marker.Update(*nodeName, cache)
 		if err != nil {
 			glog.Errorf("Update failed: %v", err)
 		}
-		time.Sleep(time.Duration(*pollInterval) * time.Second)
-	}
+	}, time.Duration(*updateInterval)*time.Second, 1.2, true, wait.NeverStop)
 }
