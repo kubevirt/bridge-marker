@@ -59,7 +59,7 @@ var _ = Describe("bridge-marker", func() {
 				}
 				capacityInt, _ := capacity.AsInt64()
 				return capacityInt, nil
-			}, 20*time.Second, 5*time.Second).Should(Equal(int64(1000)), fmt.Sprintf("should has node with capacity 1000 for the resource %s after adding the bridge to the node", resourceName))
+			}, 180*time.Second, 5*time.Second).Should(Equal(int64(1000)), fmt.Sprintf("should has node with capacity 1000 for the resource %s after adding the bridge to the node", resourceName))
 
 			err = tests.RemoveBridgeFromNode(node, tests.TestBridgeName)
 			Expect(err).ToNot(HaveOccurred())
@@ -68,7 +68,7 @@ var _ = Describe("bridge-marker", func() {
 				node, err := clientset.CoreV1().Nodes().Get(context.TODO(), node, v1.GetOptions{})
 				Expect(err).ToNot(HaveOccurred())
 				return node.Status.Capacity
-			}, 20*time.Second, 5*time.Second).ShouldNot(HaveKey(resourceName), fmt.Sprintf("should no has no capacity at node for resource %s after removing the bridge", resourceName))
+			}, 180*time.Second, 5*time.Second).ShouldNot(HaveKey(resourceName), fmt.Sprintf("should no has no capacity at node for resource %s after removing the bridge", resourceName))
 		})
 	})
 
