@@ -93,12 +93,12 @@ func GetReportedResources(nodeName string) (map[string]bool, error) {
 	return reportedResources, nil
 }
 
-func Update(nodeName string, cache cache.Cache) error {
+func Update(nodeName string, markerCache *cache.Cache) error {
 	availableResources, err := getAvailableResources()
 	if err != nil {
 		return fmt.Errorf("failed to list available resources: %v", err)
 	}
-	reportedResources := cache.Bridges()
+	reportedResources := markerCache.Bridges()
 	patchOperations := make([]patchOperation, 0)
 
 	for reportedResource, _ := range reportedResources {
@@ -137,6 +137,6 @@ func Update(nodeName string, cache cache.Cache) error {
 		return fmt.Errorf("failed to apply patch %s on node: %v", payloadBytes, err)
 	}
 
-	cache.Refresh(availableResources)
+	markerCache.Refresh(availableResources)
 	return nil
 }

@@ -40,24 +40,24 @@ func main() {
 		glog.Fatal("node-name must be set")
 	}
 
-	cache := cache.Cache{}
+	markerCache := cache.Cache{}
 	wait.JitterUntil(func() {
 		jitteredReconcileInterval := wait.Jitter(time.Duration(*reconcileInterval)*time.Minute, 1.2)
-		shouldReconcileNode := time.Now().Sub(cache.LastRefreshTime()) >= jitteredReconcileInterval
+		shouldReconcileNode := time.Now().Sub(markerCache.LastRefreshTime()) >= jitteredReconcileInterval
 		if shouldReconcileNode {
 			reportedBridges, err := marker.GetReportedResources(*nodeName)
 			if err != nil {
 				glog.Errorf("GetReportedResources failed: %v", err)
 			}
 
-			if !reflect.DeepEqual(cache.Bridges(), reportedBridges) {
+			if !reflect.DeepEqual(markerCache.Bridges(), reportedBridges) {
 				glog.Warningf("cached bridges are different than the reported bridges on node %s", *nodeName)
 			}
 
-			cache.Refresh(reportedBridges)
+			markerCache.Refresh(reportedBridges)
 		}
 
-		err := marker.Update(*nodeName, cache)
+		err := marker.Update(*nodeName, &markerCache)
 		if err != nil {
 			glog.Errorf("Update failed: %v", err)
 		}
