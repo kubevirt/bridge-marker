@@ -15,4 +15,7 @@ require (
 	kubevirt.io/qe-tools v0.1.6
 )
 
-replace golang.org/x/text => golang.org/x/text v0.3.3
+replace (
+	github.com/gogo/protobuf => github.com/gogo/protobuf v1.3.2
+	golang.org/x/text => golang.org/x/text v0.3.3
+)
