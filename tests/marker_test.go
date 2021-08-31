@@ -110,7 +110,7 @@ var _ = Describe("bridge-marker", func() {
 
 			node, err := tests.AddBridgeOnSchedulableNode(clientset, tests.TestPodBridgeName)
 			tests.CheckPodStatus(
-				clientset, 120,
+				clientset, 240,
 				func(pod *corev1.Pod) bool {
 					if pod.Status.Phase == "Running" {
 						Expect(pod.Spec.NodeName).To(Equal(node))
