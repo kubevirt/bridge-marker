@@ -46,8 +46,8 @@ REGISTRY=$manifest_registry make manifests
 ./cluster/kubectl.sh -n kube-system delete --ignore-not-found ds bridge-marker
 
 # Wait until all objects are deleted
-until [[ $(./cluster/kubectl.sh get --ignore-not-found -f $bridge_marker_manifest 2>&1 | wc -l) -eq 0 ]]; do sleep 1; done
-until [[ $(./cluster/kubectl.sh get --ignore-not-found ds bridge-marker 2>&1 | wc -l) -eq 0 ]]; do sleep 1; done
+until [[ $(./cluster/kubectl.sh get --ignore-not-found -f $bridge_marker_manifest 2>/dev/null | wc -l) -eq 0 ]]; do sleep 1; done
+until [[ $(./cluster/kubectl.sh get --ignore-not-found ds bridge-marker 2>/dev/null | wc -l) -eq 0 ]]; do sleep 1; done
 
 sed 's/quay.io\/kubevirt/registry:5000/g' $bridge_marker_manifest | ./cluster/kubectl.sh create -f -
 
