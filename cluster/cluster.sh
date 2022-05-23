@@ -28,7 +28,7 @@ function cluster::_get_tag() {
 }
 
 function cluster::install() {
-		    # Remove cloned kubevirtci repository if it does not match the requested one
+    # Remove cloned kubevirtci repository if it does not match the requested one
     if [ -d ${CLUSTER_PATH} ]; then
         if [ $(cluster::_get_repo) != ${KUBEVIRTCI_REPO} -o $(cluster::_get_tag) != ${KUBEVIRTCI_TAG} ]; then
             rm -rf ${CLUSTER_PATH}
