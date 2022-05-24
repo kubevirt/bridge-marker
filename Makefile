@@ -10,6 +10,8 @@ export GOROOT=$(BIN_DIR)/go/
 export GOBIN=$(GOROOT)/bin/
 export PATH := $(GOROOT)/bin:$(PATH)
 export GO := $(GOBIN)/go
+OCI_BIN ?= $(shell if hash podman 2>/dev/null; then echo podman; elif hash docker 2>/dev/null; then echo docker; fi)
+TLS_SETTING := $(if $(filter $(OCI_BIN),podman),"--tls-verify=false",)
 
 GINKGO ?= $(GOBIN)/ginkgo
 
@@ -42,12 +44,12 @@ marker: $(GO)
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GO) build -o $(BIN_DIR)/marker github.com/kubevirt/bridge-marker/cmd/marker
 
 docker-build: marker
-	docker build -t ${REGISTRY}/bridge-marker:${IMAGE_TAG} ./build
+	$(OCI_BIN) build -t ${REGISTRY}/bridge-marker:${IMAGE_TAG} ./build
 
 docker-push:
-	docker push ${REGISTRY}/bridge-marker:${IMAGE_TAG}
-	docker tag ${REGISTRY}/bridge-marker:${IMAGE_TAG} ${REGISTRY}/bridge-marker:${IMAGE_GIT_TAG}
-	docker push ${REGISTRY}/bridge-marker:${IMAGE_GIT_TAG}
+	$(OCI_BIN) push ${TLS_SETTING} ${REGISTRY}/bridge-marker:${IMAGE_TAG}
+	$(OCI_BIN) tag ${REGISTRY}/bridge-marker:${IMAGE_TAG} ${REGISTRY}/bridge-marker:${IMAGE_GIT_TAG}
+	$(OCI_BIN) push ${TLS_SETTING} ${REGISTRY}/bridge-marker:${IMAGE_GIT_TAG}
 
 manifests:
 	./hack/build-manifests.sh
