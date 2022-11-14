@@ -17,7 +17,7 @@
 
 set -e
 
-namespace=${NAMESPACE:-kube-system}
+namespace=${NAMESPACE:-bridge-marker-system}
 
 bridge_marker_image_repo=${BRIDGE_MARKER_IMAGE_REPO:-quay.io/kubevirt}
 bridge_marker_image_name=${BRIDGE_MARKER_IMAGE_NAME:-bridge-marker}

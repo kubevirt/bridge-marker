@@ -43,7 +43,7 @@ REGISTRY=$manifest_registry make manifests
 ./cluster/kubectl.sh delete --ignore-not-found -f $bridge_marker_manifest
 
 # Delete daemon sets that were deprecated/renamed
-./cluster/kubectl.sh -n kube-system delete --ignore-not-found ds bridge-marker
+./cluster/kubectl.sh -n bridge-marker-system delete --ignore-not-found ds bridge-marker
 
 # Wait until all objects are deleted
 until [[ $(./cluster/kubectl.sh get --ignore-not-found -f $bridge_marker_manifest 2>/dev/null | wc -l) -eq 0 ]]; do sleep 1; done
@@ -56,7 +56,7 @@ timeout=300
 sample=30
 current_time=0
 while true; do
-  describe_result=$(./cluster/kubectl.sh describe  daemonset bridge-marker -n kube-system)
+  describe_result=$(./cluster/kubectl.sh describe  daemonset bridge-marker -n bridge-marker-system)
   desired_nodes=$(echo "$describe_result" | grep "Desired Number of Nodes Scheduled"| awk -F ':'  '{print $2}')
   current_nodes=$(echo "$describe_result" | grep "Number of Nodes Scheduled with Up-to-date Pods"| awk -F ':'  '{print $2}')
   if [ "$desired_nodes" -ne "0" ] && [ $desired_nodes -eq $current_nodes ]; then

@@ -22,9 +22,8 @@ main() {
     make cluster-sync
 
     ./cluster/kubectl.sh version
-
     if ! FUNC_TEST_ARGS="--ginkgo.noColor --junit-output=$ARTIFACTS/junit.functest.xml" make functest; then
-        ./cluster/kubectl.sh logs -n kube-system -l app=bridge-marker
+        ./cluster/kubectl.sh logs -n bridge-marker-system -l app=bridge-marker
         return 1
     fi
 }
