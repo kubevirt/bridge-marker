@@ -4,7 +4,6 @@ IMAGE_GIT_TAG ?= $(shell git describe --abbrev=8 --tags)
 
 BIN_DIR = $(CURDIR)/build/_output/bin/
 export GOPROXY=direct
-export GOSUMDB=off
 export GOFLAGS=-mod=vendor
 export GOROOT=$(BIN_DIR)/go/
 export GOBIN=$(GOROOT)/bin/
