@@ -5,12 +5,17 @@ PLATFORM_LIST ?= linux/amd64,linux/s390x,linux/arm64
 ARCH := $(shell uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')
 PLATFORMS ?= linux/${ARCH}
 PLATFORMS := $(if $(filter all,$(PLATFORMS)),$(PLATFORM_LIST),$(PLATFORMS))
-# Set the platforms for building a multi-platform supported image.
-# Example:
-# PLATFORMS ?= linux/amd64,linux/arm64,linux/s390x
-# Alternatively, you can export the PLATFORMS variable like this:
-# export PLATFORMS=linux/arm64,linux/s390x,linux/amd64
-# or export PLATFORMS=all to automatically include all supported platforms.
+# Define the platforms for building a multi-platform image.
+# By default, the image will be built based on the host architecture.
+# The variable PLATFORM_LIST contains a list of all supported platforms:
+#    PLATFORM_LIST="linux/amd64,linux/s390x,linux/arm64"
+# To specify the platforms, you can do the following:
+# 1. Manually set the PLATFORMS variable for specific platforms:
+#    export PLATFORMS=linux/amd64
+#    or
+#    export PLATFORMS=linux/amd64,linux/arm64
+# 2. Or, use 'all' to automatically include all supported platforms:
+#    export PLATFORMS=all
 DOCKER_BUILDER ?= marker-docker-builder
 MARKER_IMAGE_TAGGED := ${REGISTRY}/bridge-marker:${IMAGE_TAG}
 MARKER_IMAGE_GIT_TAGGED := ${REGISTRY}/bridge-marker:${IMAGE_GIT_TAG}
