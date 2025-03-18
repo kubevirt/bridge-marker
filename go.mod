@@ -5,7 +5,7 @@ go 1.22.0
 toolchain go1.22.5
 
 require (
-	github.com/golang/glog v1.2.4
+	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/onsi/ginkgo v1.16.4
 	github.com/onsi/gomega v1.31.0
 	github.com/vishvananda/netlink v1.1.1-0.20220118170537-d6b03fdeb845
