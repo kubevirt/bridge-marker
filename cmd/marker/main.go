@@ -17,6 +17,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"net/http"
 	"reflect"
 	"time"
 
@@ -40,26 +41,38 @@ func main() {
 		glog.Fatal("node-name must be set")
 	}
 
-	markerCache := cache.Cache{}
-	wait.JitterUntil(func() {
-		jitteredReconcileInterval := wait.Jitter(time.Duration(*reconcileInterval)*time.Minute, 1.2)
-		shouldReconcileNode := time.Now().Sub(markerCache.LastRefreshTime()) >= jitteredReconcileInterval
-		if shouldReconcileNode {
-			reportedBridges, err := marker.GetReportedResources(*nodeName)
+	go func() {
+		markerCache := cache.Cache{}
+		wait.JitterUntil(func() {
+			jitteredReconcileInterval := wait.Jitter(time.Duration(*reconcileInterval)*time.Minute, 1.2)
+			shouldReconcileNode := time.Now().Sub(markerCache.LastRefreshTime()) >= jitteredReconcileInterval
+			if shouldReconcileNode {
+				reportedBridges, err := marker.GetReportedResources(*nodeName)
+				if err != nil {
+					glog.Errorf("GetReportedResources failed: %v", err)
+				}
+
+				if !reflect.DeepEqual(markerCache.Bridges(), reportedBridges) {
+					glog.Warningf("cached bridges are different than the reported bridges on node %s", *nodeName)
+				}
+
+				markerCache.Refresh(reportedBridges)
+			}
+
+			err := marker.Update(*nodeName, &markerCache)
 			if err != nil {
-				glog.Errorf("GetReportedResources failed: %v", err)
+				glog.Errorf("Update failed: %v", err)
 			}
+		}, time.Duration(*updateInterval)*time.Second, 1.2, true, wait.NeverStop)
 
-			if !reflect.DeepEqual(markerCache.Bridges(), reportedBridges) {
-				glog.Warningf("cached bridges are different than the reported bridges on node %s", *nodeName)
-			}
+	}()
 
-			markerCache.Refresh(reportedBridges)
-		}
-
-		err := marker.Update(*nodeName, &markerCache)
-		if err != nil {
-			glog.Errorf("Update failed: %v", err)
-		}
-	}, time.Duration(*updateInterval)*time.Second, 1.2, true, wait.NeverStop)
+	http.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("ok"))
+	})
+	glog.Infof("Starting health probe server on :8081")
+	if err := http.ListenAndServe(":8081", nil); err != nil {
+		glog.Fatalf("Health probe server failed: %v", err)
+	}
 }
