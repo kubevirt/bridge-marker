@@ -29,7 +29,7 @@ if [[ "$KUBEVIRT_PROVIDER" == external ]]; then
     config_dir=./config/external
 else
     registry_port=$(./cluster/cli.sh ports registry | tr -d '\r')
-    push_registry=localhost:$registry_port
+    push_registry=127.0.0.1:$registry_port
     manifest_registry=registry:5000
     config_dir=./config/test
 fi

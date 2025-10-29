@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-export KUBEVIRT_PROVIDER=${KUBEVIRT_PROVIDER:-'k8s-1.33'}
+export KUBEVIRT_PROVIDER=${KUBEVIRT_PROVIDER:-'k8s-1.34'}
 export KUBEVIRTCI_TAG=${KUBEVIRTCI_TAG:-2509181951-8264c60a}
 
 KUBEVIRTCI_REPO='https://github.com/kubevirt/kubevirtci.git'
