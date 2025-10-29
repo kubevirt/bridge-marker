@@ -136,7 +136,7 @@ func PodSpec(name string, resourceRequirements v1.ResourceList) *v1.Pod {
 			Containers: []v1.Container{
 				{
 					Name:  name,
-					Image: "ubuntu",
+					Image: "docker.io/library/ubuntu:latest",
 					Resources: v1.ResourceRequirements{
 						Limits:   resourceRequirements,
 						Requests: resourceRequirements,
