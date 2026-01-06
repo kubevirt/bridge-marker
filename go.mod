@@ -1,8 +1,6 @@
 module github.com/kubevirt/bridge-marker
 
-go 1.22.0
-
-toolchain go1.22.5
+go 1.24.11
 
 require (
 	github.com/golang/glog v1.2.4
