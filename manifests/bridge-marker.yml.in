@@ -39,6 +39,10 @@ spec:
         args:
           - -node-name
           - $(NODE_NAME)
+          - -health-probe-port
+          - "${HEALTH_PROBE_PORT}"
+          - -health-probe-path
+          - "${HEALTH_PROBE_PATH}"
         resources:
           requests:
             cpu: "10m"
@@ -50,18 +54,18 @@ spec:
                 fieldPath: spec.nodeName
         ports:
         - name: healthport
-          containerPort: 8081
+          containerPort: ${HEALTH_PROBE_PORT}
           protocol: TCP
         terminationMessagePolicy: FallbackToLogsOnError
         readinessProbe:
           httpGet:
-            path: /healthz
+            path: ${HEALTH_PROBE_PATH}
             port: healthport
           initialDelaySeconds: 5
           periodSeconds: 10
         livenessProbe:
           httpGet:
-            path: /healthz
+            path: ${HEALTH_PROBE_PATH}
             port: healthport
           initialDelaySeconds: 10
           periodSeconds: 20
