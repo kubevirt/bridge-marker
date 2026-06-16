@@ -37,7 +37,9 @@ func main() {
 
 	const defaultHealthProbePort = 8081
 	healthProbePort := flag.Int("health-probe-port", defaultHealthProbePort, fmt.Sprintf("port for the health probe HTTP server, %d by default", defaultHealthProbePort))
-	healthProbePath := flag.String("health-probe-path", "/healthz", "HTTP path for the health probe endpoint")
+	if *healthProbePort < 1 || *healthProbePort > 65535 {
+		glog.Fatalf("health-probe-port must be between 1 and 65535, got %d", *healthProbePort)
+	}
 
 	flag.Parse()
 
@@ -71,12 +73,12 @@ func main() {
 
 	}()
 
-	http.HandleFunc(*healthProbePath, func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("ok"))
 	})
 	addr := fmt.Sprintf(":%d", *healthProbePort)
-	glog.Infof("Starting health probe server on %s%s", addr, *healthProbePath)
+	glog.Infof("Starting health probe server on %s/healthz", addr)
 	if err := http.ListenAndServe(addr, nil); err != nil {
 		glog.Fatalf("Health probe server failed: %v", err)
 	}

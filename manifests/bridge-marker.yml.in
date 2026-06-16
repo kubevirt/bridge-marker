@@ -41,8 +41,6 @@ spec:
           - $(NODE_NAME)
           - -health-probe-port
           - "${HEALTH_PROBE_PORT}"
-          - -health-probe-path
-          - "${HEALTH_PROBE_PATH}"
         resources:
           requests:
             cpu: "10m"
@@ -59,13 +57,13 @@ spec:
         terminationMessagePolicy: FallbackToLogsOnError
         readinessProbe:
           httpGet:
-            path: ${HEALTH_PROBE_PATH}
+            path: /healthz
             port: healthport
           initialDelaySeconds: 5
           periodSeconds: 10
         livenessProbe:
           httpGet:
-            path: ${HEALTH_PROBE_PATH}
+            path: /healthz
             port: healthport
           initialDelaySeconds: 10
           periodSeconds: 20
