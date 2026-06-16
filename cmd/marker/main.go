@@ -37,14 +37,15 @@ func main() {
 
 	const defaultHealthProbePort = 8081
 	healthProbePort := flag.Int("health-probe-port", defaultHealthProbePort, fmt.Sprintf("port for the health probe HTTP server, %d by default", defaultHealthProbePort))
-	if *healthProbePort < 1 || *healthProbePort > 65535 {
-		glog.Fatalf("health-probe-port must be between 1 and 65535, got %d", *healthProbePort)
-	}
 
 	flag.Parse()
 
 	if *nodeName == "" {
 		glog.Fatal("node-name must be set")
+	}
+
+	if *healthProbePort < 1 || *healthProbePort > 65535 {
+		glog.Fatalf("health-probe-port must be between 1 and 65535, got %d", *healthProbePort)
 	}
 
 	go func() {
