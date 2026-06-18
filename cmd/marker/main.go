@@ -35,10 +35,17 @@ func main() {
 	const defaultReconcileInterval = 10 * time.Minute
 	reconcileInterval := flag.Int("reconcile-interval", int(defaultReconcileInterval.Minutes()), fmt.Sprintf("interval between node bridges reconcile in minutes, %d by default", defaultReconcileInterval))
 
+	const defaultHealthProbePort = 8081
+	healthProbePort := flag.Int("health-probe-port", defaultHealthProbePort, fmt.Sprintf("port for the health probe HTTP server, %d by default", defaultHealthProbePort))
+
 	flag.Parse()
 
 	if *nodeName == "" {
 		glog.Fatal("node-name must be set")
+	}
+
+	if *healthProbePort < 1 || *healthProbePort > 65535 {
+		glog.Fatalf("health-probe-port must be between 1 and 65535, got %d", *healthProbePort)
 	}
 
 	go func() {
@@ -71,8 +78,9 @@ func main() {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("ok"))
 	})
-	glog.Infof("Starting health probe server on :8081")
-	if err := http.ListenAndServe(":8081", nil); err != nil {
+	addr := fmt.Sprintf(":%d", *healthProbePort)
+	glog.Infof("Starting health probe server on %s/healthz", addr)
+	if err := http.ListenAndServe(addr, nil); err != nil {
 		glog.Fatalf("Health probe server failed: %v", err)
 	}
 }

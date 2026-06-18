@@ -24,6 +24,8 @@ bridge_marker_image_name=${BRIDGE_MARKER_IMAGE_NAME:-bridge-marker}
 bridge_marker_image_version=${BRIDGE_MARKER_IMAGE_VERSION:-latest}
 bridge_marker_image_pull_policy=${BRIDGE_MARKER_IMAGE_PULL_POLICY:-IfNotPresent}
 
+health_probe_port=${HEALTH_PROBE_PORT:-8081}
+
 mkdir -p examples
 for template in manifests/*.in; do
     name=$(basename ${template%.in})
@@ -33,5 +35,6 @@ for template in manifests/*.in; do
         -e "s#\${BRIDGE_MARKER_IMAGE_NAME}#${bridge_marker_image_name}#g" \
         -e "s#\${BRIDGE_MARKER_IMAGE_VERSION}#${bridge_marker_image_version}#g" \
         -e "s#\${BRIDGE_MARKER_IMAGE_PULL_POLICY}#${bridge_marker_image_pull_policy}#g" \
+        -e "s#\${HEALTH_PROBE_PORT}#${health_probe_port}#g" \
         ${template} > examples/${name}
 done
