@@ -1,6 +1,6 @@
 module github.com/kubevirt/bridge-marker
 
-go 1.24.11
+go 1.25.0
 
 require (
 	github.com/golang/glog v1.2.4
@@ -40,7 +40,7 @@ require (
 	github.com/vishvananda/netns v0.0.0-20200728191858-db3c7e526aae // indirect
 	golang.org/x/net v0.33.0 // indirect
 	golang.org/x/oauth2 v0.13.0 // indirect
-	golang.org/x/sys v0.28.0 // indirect
+	golang.org/x/sys v0.44.0 // indirect
 	golang.org/x/term v0.27.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
