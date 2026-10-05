@@ -23,8 +23,11 @@ ENV PATH=$PATH:/usr/local/go/bin
 RUN go mod download
 COPY . .
 RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -o build/_output/bin/marker github.com/kubevirt/bridge-marker/cmd/marker
+# glog writes default log files under /tmp; scratch has no filesystem besides what we COPY.
+RUN mkdir -p /scratchfs/tmp && chmod 1777 /scratchfs/tmp
 
-FROM --platform=linux/${TARGETARCH} registry.access.redhat.com/ubi8/ubi-minimal
+FROM --platform=linux/${TARGETARCH} scratch
+COPY --from=builder /scratchfs/ /
 COPY --from=builder /go/src/bridge-marker/build/_output/bin/marker /marker
 COPY --from=builder /go/src/bridge-marker/build/_output/bin/.version /.version
 ENTRYPOINT [ "/marker"]

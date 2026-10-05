@@ -28,6 +28,10 @@ import (
 )
 
 func main() {
+	// glog defaults to writing files in /tmp; send logs to stderr so the
+	// process works on scratch (no /tmp) and kubectl logs can capture output.
+	_ = flag.Set("logtostderr", "true")
+
 	nodeName := flag.String("node-name", "", "name of kubernetes node")
 	const defaultUpdateInterval = 60 * time.Second
 	updateInterval := flag.Int("update-interval", int(defaultUpdateInterval.Seconds()), fmt.Sprintf("interval between updates in seconds, %d by default", defaultUpdateInterval))
