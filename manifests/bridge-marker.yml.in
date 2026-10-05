@@ -37,6 +37,7 @@ spec:
         image: ${BRIDGE_MARKER_IMAGE_REPO}/${BRIDGE_MARKER_IMAGE_NAME}:${BRIDGE_MARKER_IMAGE_VERSION}
         imagePullPolicy: ${BRIDGE_MARKER_IMAGE_PULL_POLICY}
         args:
+          - -logtostderr=true
           - -node-name
           - $(NODE_NAME)
           - -health-probe-port
