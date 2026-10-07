@@ -77,10 +77,13 @@ rules:
   - ""
   resources:
   - nodes
-  - nodes/status
   verbs:
   - get
-  - update
+- apiGroups:
+  - ""
+  resources:
+  - nodes/status
+  verbs:
   - patch
 ---
 kind: ClusterRoleBinding
