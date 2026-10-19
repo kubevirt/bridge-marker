@@ -78,10 +78,13 @@ rules:
   - ""
   resources:
   - nodes
-  - nodes/status
   verbs:
   - get
-  - update
+- apiGroups:
+  - ""
+  resources:
+  - nodes/status
+  verbs:
   - patch
 ---
 kind: ClusterRoleBinding
@@ -102,3 +105,46 @@ kind: ServiceAccount
 metadata:
   name: bridge-marker
   namespace: ${NAMESPACE}
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicy
+metadata:
+  name: bridge-marker-node-restriction
+spec:
+  failurePolicy: Fail
+  matchConstraints:
+    resourceRules:
+    - apiGroups:
+      - ""
+      apiVersions:
+      - v1
+      operations:
+      - UPDATE
+      resources:
+      - nodes/status
+  matchConditions:
+  - name: is-bridge-marker-sa
+    expression: "request.userInfo.username == 'system:serviceaccount:${NAMESPACE}:bridge-marker'"
+  variables:
+  - name: requestFromOwnNode
+    expression: "has(request.userInfo.extra) && ('authentication.kubernetes.io/node-name' in request.userInfo.extra) && object.metadata.name == request.userInfo.extra['authentication.kubernetes.io/node-name'][0]"
+  - name: oldNonBridgeCapacity
+    expression: 'oldObject.status.capacity.filter(k, !k.startsWith("bridge.network.kubevirt.io/"))'
+  - name: newNonBridgeCapacity
+    expression: 'object.status.capacity.filter(k, !k.startsWith("bridge.network.kubevirt.io/"))'
+  validations:
+  - expression: "variables.requestFromOwnNode"
+    message: "this user cannot modify this node"
+    reason: Forbidden
+  - expression: 'has(object.status.capacity) && has(oldObject.status.capacity) && size(variables.newNonBridgeCapacity) == size(variables.oldNonBridgeCapacity) && variables.newNonBridgeCapacity.all(k, k in variables.oldNonBridgeCapacity && object.status.capacity[k] == oldObject.status.capacity[k])'
+    message: "this user can only add, remove, or update status.capacity keys under bridge.network.kubevirt.io/"
+    reason: Forbidden
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicyBinding
+metadata:
+  name: bridge-marker-node-restriction
+spec:
+  policyName: bridge-marker-node-restriction
+  validationActions:
+  - Deny
